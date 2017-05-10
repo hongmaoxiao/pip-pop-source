@@ -1,0 +1,97 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+"""Usage:
+  pip-diff (--fresh | --stale) <reqfile1> <reqfile2>
+  pip-diff (-h | --help)
+
+Options:
+  -h --help     Show this screen.
+  --fresh       List newly added packages.
+  --stale       List removed packages.
+"""
+import os
+from docopt import docopt
+from pkg_resources import parse_requirements
+
+
+# TODO: ignore lines
+IGNORABLE_LINES = '#', '-r'
+VERSION_OPERATORS = ['==', '>=', '<=', '>', '<', ',']
+
+def split(s):
+    for operator in VERSION_OPERATORS:
+        s = s.replace(operator, '!')
+
+    return s.split('!')
+
+
+# TODO: consider packages upgrades.
+
+class Requirements(object):
+    """docstring for Requirements"""
+    def __init__(self, reqfile=None):
+        super(Requirements, self).__init__()
+        self.path = reqfile
+        self.requirements = []
+
+        if reqfile:
+            self.load(reqfile)
+
+    def __repr__(self):
+        return '<Requirements \'{}\'>'.format(self.path)
+
+    def load(self, reqfile):
+
+        if not os.path.exists(reqfile):
+            raise ValueError('The given requirements file does not exists.')
+
+        with open(reqfile) as f:
+            data = []
+
+            for line in f:
+                line = line.strip()
+
+                # Skip lines that start with any comment/control charecters.
+                if not any([line.startswith(p) for p in IGNORABLE_LINES]):
+                    data.append(line)
+
+            for requirement in parse_requirements(data):
+                self.requirements.append(requirement)
+
+
+        # assert that the given file exists
+        # parse the file
+        # insert thoes entries into self.declarations
+        pass
+
+    def diff(self, requirements, ignore_versions=False):
+        r1 = self
+        r2 = requirements
+        results = {'fresh': [], 'stale': []}
+
+        # Generate fresh packages
+        other_reqs = (
+            [r.project_name for r in r1.requirements]
+            if ignore_versions else r1.requirements
+        )
+
+        for req in r2.requirements:
+            r = req.project_name if ignore_versions else req
+
+            if r not in other_reqs:
+                results['fresh'].append(req)
+
+        # Generate stale packages
+        other_reqs = (
+            [r.project_name for r in r2.requirements]
+            if ignore_versions else r2.requirements
+        )
+
+        for req in r1.requirements:
+            r = req.project_name if ignore_versions else req
+
+            if r not in other_reqs:
+                results['stale'].append(req)
+
+        return results
