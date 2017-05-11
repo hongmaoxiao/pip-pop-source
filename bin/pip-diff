@@ -26,7 +26,7 @@ def split(s):
     return s.split('!')
 
 
-# TODO: consider packages upgrades.
+# TODO: consider package upgrades.
 
 class Requirements(object):
     """docstring for Requirements"""
@@ -44,7 +44,7 @@ class Requirements(object):
     def load(self, reqfile):
 
         if not os.path.exists(reqfile):
-            raise ValueError('The given requirements file does not exists.')
+            raise ValueError('The given requirements file does not exist.')
 
         with open(reqfile) as f:
             data = []
@@ -62,7 +62,7 @@ class Requirements(object):
 
         # assert that the given file exists
         # parse the file
-        # insert thoes entries into self.declarations
+        # insert those entries into self.declarations
         pass
 
     def diff(self, requirements, ignore_versions=False):
@@ -70,7 +70,7 @@ class Requirements(object):
         r2 = requirements
         results = {'fresh': [], 'stale': []}
 
-        # Generate fresh packages
+        # Generate fresh packages.
         other_reqs = (
             [r.project_name for r in r1.requirements]
             if ignore_versions else r1.requirements
@@ -82,7 +82,7 @@ class Requirements(object):
             if r not in other_reqs:
                 results['fresh'].append(req)
 
-        # Generate stale packages
+        # Generate stale packages.
         other_reqs = (
             [r.project_name for r in r2.requirements]
             if ignore_versions else r2.requirements
@@ -95,3 +95,39 @@ class Requirements(object):
                 results['stale'].append(req)
 
         return results
+
+
+
+
+
+def diff(r1, r2, include_fresh=False, include_stale=False):
+    # assert that r1 and r2 are files.
+
+    try:
+        r1 = Requirements(r1)
+        r2 = Requirements(r2)
+    except ValueError:
+        print 'There was a problem loading the given requirements files.'
+        exit(os.EX_NOINPUT)
+
+    results = r1.diff(r2)
+    print results
+
+
+
+def main():
+    args = docopt(__doc__, version='pip-diff')
+
+    kwargs = {
+        'r1': args['<reqfile1>'],
+        'r2': args['<reqfile2>'],
+        'include_fresh': args['--fresh'],
+        'include_stale': args['--stale']
+    }
+
+    diff(**kwargs)
+
+
+
+if __name__ == '__main__':
+    main()
