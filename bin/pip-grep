@@ -34,7 +34,11 @@ class Requirements(object):
 
         finder = PackageFinder([], [], session=requests)
         for requirement in parse_requirements(reqfile, finder=finder, session=requests):
-            self.requirements.append(requirement)
+            if requirement.req:
+                if not getattr(requirement.req, 'name', None):
+                    # Prior to pip 8.1.2 the attribute `name` did not exist.
+                    requirement.req.name = requirement.req.project_name
+                self.requirements.append(requirement.req)
 
 
 
@@ -50,19 +54,16 @@ def grep(reqfile, packages, silent=False):
 
         exit(os.EX_NOINPUT)
 
-    for requirement in r.requirements:
+    for req in r.requirements:
 
-        if requirement.req:
+        if req.name in packages:
 
-            if requirement.req.project_name in packages:
-
-                if not silent:
-                    print('Package {} found!'.format(requirement.req.project_name))
-
-                exit(0)
+            if not silent:
+                print('Package {} found!'.format(req.name))
+            exit(0)
 
     if not silent:
-        print('Not found.'.format(requirement.req.project_name))
+        print('Not found.')
 
     exit(1)
 
