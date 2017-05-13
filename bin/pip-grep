@@ -10,6 +10,10 @@ Options:
 import os
 from docopt import docopt
 from pip.req import parse_requirements
+from pip.index import PackageFinder
+from pip._vendor.requests import session
+
+requests = session()
 
 class Requirements(object):
     def __init__(self, reqfile=None):
@@ -28,8 +32,8 @@ class Requirements(object):
         if not os.path.exists(reqfile):
             raise ValueError('The given requirements file does not exist.')
 
-        finder = PackageFinder([], [])
-        for requirement in parse_requirements(reqfile):
+        finder = PackageFinder([], [], session=requests)
+        for requirement in parse_requirements(reqfile, finder=finder, session=requests):
             self.requirements.append(requirement)
 
 
@@ -58,7 +62,7 @@ def grep(reqfile, packages, silent=False):
                 exit(0)
 
     if not silent:
-        print 'Not found.'.format(requirement.req.project_name)
+        print('Not found.'.format(requirement.req.project_name))
 
     exit(1)
 
